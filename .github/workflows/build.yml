@@ -1,0 +1,37 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: [ "stable", "beta" ]
+    steps:
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: default
+        toolchain: ${{ matrix.toolchain }}
+        override: true
+    - name: rustc -vV
+      run: rustc -vV
+    - name: Initialize
+      run: |
+        git clone https://github.com/ekroon/roapi.git
+        cd roapi
+        git checkout rustc-internal-error
+        cargo build
+        cargo fmt
+    - name: Reproduce short
+      continue-on-error: true
+      run: |
+        cd roapi
+        cargo build
+    - name: Reproduce stacktrace
+      continue-on-error: true
+      run: |
+        cd roapi
+        RUST_BACKTRACE=1 cargo build
